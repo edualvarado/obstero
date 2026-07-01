@@ -1,0 +1,5 @@
+# Omit these files from version control
+.env
+__pycache__/
+*.pyc
+venv/
