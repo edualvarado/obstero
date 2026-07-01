@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="obstero.jpg" alt="Obstero" width="360"/>
+  <img src="docs/obstero.jpg" alt="Obstero" width="360"/>
 </p>
 
 # Obstero
@@ -29,6 +29,23 @@ Every stage is **dry-run by default** — nothing is written to Zotero or your
 vault until you pass `--live`. Idempotency is tracked with internal Zotero
 tags (`_CLASSIFIED`, `_SUMMARIZED`) so re-running a stage never reprocesses
 the same item twice.
+
+## What it looks like
+
+Each summarized paper lands in your vault as a structured note — properties,
+tags, and an AI-generated research-intelligence breakdown, with concepts
+auto-linked to the rest of your library:
+
+<p align="center">
+  <img src="docs/obsidian.png" alt="Synced note in Obsidian" width="700"/>
+</p>
+
+Over time, those `[[wiki-links]]` build into a connected graph of your
+research:
+
+<p align="center">
+  <img src="docs/graph.png" alt="Resulting Obsidian graph" width="500"/>
+</p>
 
 ## Requirements
 
