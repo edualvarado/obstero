@@ -3,3 +3,11 @@
 __pycache__/
 *.pyc
 venv/
+.vs/
+
+# Personal Zotero/Obsidian config - copy the *.example.json files instead
+config/collections.json
+config/primitives.json
+
+# Local Claude Code permission state - machine-specific, not shared config
+.claude/settings.local.json
