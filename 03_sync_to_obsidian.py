@@ -37,7 +37,8 @@ def auto_link_content(content, concept_entry):
         search_term = concept_entry
         target_note = concept_entry
 
-    parts = re.split(r'(\[\[.*?\]\])', content)
+    # Odd indices are protected: existing [[links]], #tags and `code` (a link inside either breaks it)
+    parts = re.split(r'(\[\[.*?\]\]|(?<!\S)#[\w/-]+|`[^`\n]*`)', content)
     pattern = rf'\b({re.escape(search_term)})\b'
     
     for i in range(0, len(parts), 2):
@@ -74,31 +75,53 @@ def html_to_markdown(html_content):
     text = re.sub(r'</(?:strong|b)>', '**', text)
     text = re.sub(r'<(?:em|i)>', '*', text)
     text = re.sub(r'</(?:em|i)>', '*', text)
-    
+    text = re.sub(r'</?code>', '`', text)
+    text = re.sub(r'<a [^>]*href="([^"]*)"[^>]*>(.*?)</a>', r'[\2](\1)', text)
+
     lines = []
     level = -1
-    tokens = re.split(r'(<(?:ul|ol|li|/ul|/ol|/li|p|div|br|/p|/div)[^>]*>)', text, flags=re.IGNORECASE)
-    
-    for token in tokens:
+    tokens = re.split(r'(<(?:ul|ol|li|/ul|/ol|/li|p|div|br|/p|/div|h[1-6]|/h[1-6]|hr)[^>]*>)', text, flags=re.IGNORECASE)
+
+    for i, token in enumerate(tokens):
+        if i % 2 == 0:  # Even indices are text between tags — always keep it
+            content = html.unescape(token).strip()
+            if content:
+                lines.append(content)
+            continue
+
         clean_t = token.lower()
+        heading = re.match(r'<h([1-6])', clean_t)
         if '<ul' in clean_t or '<ol' in clean_t:
             level += 1
         elif '</ul' in clean_t or '</ol' in clean_t:
             level -= 1
         elif '<li' in clean_t:
-            indent = "    " * level 
+            indent = "    " * level
             lines.append(f"\n{indent}- ")
-        elif '<p' in clean_t or '<div' in clean_t or '<br' in clean_t:
+        elif heading:
+            # One level down: the note's own "# 📄 title" is the only H1
+            lines.append("\n\n" + "#" * (int(heading.group(1)) + 1) + " ")
+        elif '</h' in clean_t:
             lines.append("\n")
-        elif token.startswith('<'):
-            continue 
-        else:
-            content = html.unescape(token).strip()
-            if content:
-                lines.append(content)
+        elif '<hr' in clean_t:
+            # Blank line before "---" so it isn't read as a setext heading underline
+            lines.append("\n\n---\n\n")
+        elif '<p' in clean_t or '<div' in clean_t or '<br' in clean_t:
+            # <li><p>text</p> must stay on the bullet line, not leave an empty "- "
+            if not (lines and lines[-1].endswith("- ")):
+                lines.append("\n")
+        # Any other tag (</li>, </p>, </div>) needs no output
 
     text = "".join(lines)
+    text = blockquotes_to_markdown(text)
     return re.sub(r'\n{3,}', '\n\n', text).strip()
+
+def blockquotes_to_markdown(text):
+    """<blockquote> inside a bullet keeps its text on the bullet line; elsewhere it becomes "> " lines."""
+    text = re.sub(r'(?ms)^([ \t]*- )<blockquote>\s*(.*?)\s*</blockquote>',
+                  lambda m: m.group(1) + " ".join(m.group(2).split("\n")), text)
+    return re.sub(r'(?s)\s*<blockquote>\s*(.*?)\s*</blockquote>\s*',
+                  lambda m: "\n\n" + "\n".join(f"> {l}".rstrip() for l in m.group(1).split("\n")) + "\n\n", text)
 
 def get_full_collection_path(item, all_collections):
     if not item['data'].get('collections'):
@@ -162,7 +185,8 @@ def run_sync(dry_run=True, chunk_size=1000, keep_ai_links=False):
         year = year_match.group(0) if year_match else "n.d."
         
         raw_tags = [t['tag'] for t in data.get('tags', [])]
-        cleaned_tags = [t for t in raw_tags if t not in ['_SUMMARIZED', '_CLASSIFIED']]
+        # Obsidian tags can't contain spaces: "Computer Science - Graphics" -> "Computer-Science-Graphics"
+        cleaned_tags = [re.sub(r'[\s-]+', '-', t.strip()) for t in raw_tags if t not in ['_SUMMARIZED', '_CLASSIFIED']]
         for default_tag in ['literature', 'research-intelligence']:
             if default_tag not in cleaned_tags: cleaned_tags.append(default_tag)
         yaml_tags = ", ".join([f'"{t}"' for t in cleaned_tags])
@@ -178,6 +202,8 @@ def run_sync(dry_run=True, chunk_size=1000, keep_ai_links=False):
         # Process Notes
         notes = [n for n in children if n['data'].get('itemType') == 'note']
         summary_content = "\n".join([html_to_markdown(n['data']['note']) for n in notes])
+        # Link only the summary body — frontmatter, title and the up: link must stay untouched
+        summary_content = format_obsidian_content(summary_content, keep_ai_links=keep_ai_links)
 
         # Template with UP Link
         markdown = f"""---
@@ -196,8 +222,6 @@ tags: [{yaml_tags}]
 
 ---
 
-## 🤖 AI-Generated Intelligence
-
 {summary_content}
 """
 
@@ -206,10 +230,8 @@ tags: [{yaml_tags}]
         else:
             dest_dir.mkdir(parents=True, exist_ok=True)
 
-            final_formatted_summary = format_obsidian_content(markdown, keep_ai_links=keep_ai_links)
-
             with open(dest_file, "w", encoding="utf-8") as f:
-                f.write(final_formatted_summary)
+                f.write(markdown)
 
             print(f"✅ [{processed_count + 1}/{chunk_size}] Imported: {safe_title}")
 

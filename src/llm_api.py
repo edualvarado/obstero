@@ -1,4 +1,5 @@
 import json
+import re
 import anthropic
 from src.config import CLAUDE_API_KEY, VALID_FOLDERS
 
@@ -52,7 +53,8 @@ def classify_paper(title, abstract, existing_tags=None):
 def summarize_paper(title, pdf_text, tags=None):
     """Generates a high-signal research summary optimized for Obsidian Graph View and AI ingestion."""
     
-    tag_string = " ".join([f"#{t}" for t in tags]) if tags else ""
+    # Obsidian tags can't contain spaces: "Computer Science - Graphics" -> "Computer-Science-Graphics"
+    tag_string = " ".join(["#" + re.sub(r'[\s-]+', '-', t.strip()) for t in tags]) if tags else ""
 
     prompt = f"""
     You are an elite AI Research Scientist and a deep-tech Venture Capital Partner. Your task is to analyze the provided academic paper and extract high-signal intelligence for an Obsidian-based knowledge graph. 
