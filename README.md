@@ -144,6 +144,7 @@ confirm — the same safety model as running the scripts by hand.
 | `tools/id_extractor.py` | Fetches your Zotero collection key mapping |
 | `tools/discover_primitives.py` | Scans your vault for the most-used wiki-links |
 | `tools/normalize_links.py` | Normalizes wiki-link casing across the vault |
+| `tools/repair_vault_notes.py` | One-off repair of notes written by older sync versions (raw HTML, empty bullets, links inside tags); `--write` applies, originals backed up outside the vault |
 | `.claude/skills/` | Claude Code skills wrapping each stage |
 
 ## License

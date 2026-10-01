@@ -19,6 +19,7 @@ the Obsidian vault as `.md` files with injected wiki-links.
 | `config/*.example.json` | Committed generic templates for the above |
 | `tools/id_extractor.py` | Fetches Zotero collection key mapping; `--write` saves to `config/collections.json` |
 | `tools/discover_primitives.py` | Scans vault for most-used wiki-links; `--write` merges into `config/primitives.json` |
+| `tools/repair_vault_notes.py` | One-off repair of notes from older sync versions; `--write` applies, backs up originals outside the vault |
 | `.claude/skills/` | Claude Code skills wrapping each stage (`/obstero-classify`, `/obstero-summarize`, `/obstero-sync`, `/obstero-pipeline`, `/obstero-setup`) |
 | `old/` | Superseded single-file scripts — ignore |
 
