@@ -17,23 +17,6 @@ def get_unclassified_items():
     # Get top-level items (ignores attachments/PDFs which are children)
     return zot.collection_items_top(unclassified_id)
 
-def add_note_to_item(parent_item_key, note_content):
-    """Creates a child note attached to a specific Zotero item."""
-    template = zot.item_template('note')
-    template['note'] = note_content
-    template['parentItem'] = parent_item_key
-    
-    try:
-        resp = zot.create_items([template])
-        if resp['successful']:
-            return True
-        else:
-            print(f"Error creating note: {resp.get('failed')}")
-            return False
-    except Exception as e:
-        print(f"Zotero API Error: {e}")
-        return False
-
 def get_all_top_items():
     """Fetches all top-level items (papers, books) ignoring attachments."""
     print("Downloading all items from Zotero. This may take a minute...")
@@ -183,9 +166,17 @@ def add_note_to_item(parent_item_key, note_content):
     template = zot.item_template('note')
     template['note'] = html_content
     template['parentItem'] = parent_item_key
-    
-    resp = zot.create_items([template])
-    return resp.get('successful', False)
+
+    try:
+        resp = zot.create_items([template])
+        if resp['successful']:
+            return True
+        else:
+            print(f"Error creating note: {resp.get('failed')}")
+            return False
+    except Exception as e:
+        print(f"Zotero API Error: {e}")
+        return False
 
 def heal_pdf_header(pdf_path):
     """Scans a file for the true PDF start and strips garbage bytes at the top."""
