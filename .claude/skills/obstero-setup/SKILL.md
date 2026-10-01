@@ -14,27 +14,32 @@ auto-linking quality). All three are gitignored — only the `*.example.json` /
 
 ## What to check, in order
 
-1. **`.env`** — if missing, tell the user to `cp .env.example .env` and fill
+1. **`obstero` conda env** — all commands run via
+   `conda run --no-capture-output -n obstero python ...`. If `conda env list`
+   doesn't show it, create it: `conda create -y -n obstero python=3.12`, then
+   `conda run -n obstero pip install -r requirements.txt`.
+
+2. **`.env`** — if missing, tell the user to `cp .env.example .env` and fill
    in `ZOTERO_LIBRARY_ID`, `ZOTERO_API_KEY`, `CLAUDE_API_KEY`,
    `ZOTERO_BASE_DIR`, `OBSIDIAN_VAULT_PATH`. Don't attempt to fill these in
    for them — they're credentials/paths only the user has.
 
-2. **`config/collections.json`** — if missing, run
-   `python tools/id_extractor.py` (no `--write`) first to preview the
+3. **`config/collections.json`** — if missing, run
+   `conda run --no-capture-output -n obstero python tools/id_extractor.py` (no `--write`) first to preview the
    discovered Zotero collection mapping, show it to the user, then re-run
    with `--write` to save it to `config/collections.json`. This requires
    `.env` to already have valid Zotero credentials.
 
-3. **`config/primitives.json`** — if missing, this is optional (sync falls
+4. **`config/primitives.json`** — if missing, this is optional (sync falls
    back to a generic example automatically), but mention that running
-   `python tools/discover_primitives.py --write` will seed it from whatever
+   `conda run --no-capture-output -n obstero python tools/discover_primitives.py --write` will seed it from whatever
    wiki-links already exist in their Obsidian vault. If the vault has no
    existing literature notes yet, it's fine to skip this and just copy
    `config/primitives.example.json` to `config/primitives.json` as a
    starting point, or leave it unset for now.
 
-4. Once all three exist, suggest a dry-run of a single item as a smoke test:
-   `python 01_classification.py --max-items 1`.
+5. Once all of the above are in place, suggest a dry-run of a single item as a smoke test:
+   `conda run --no-capture-output -n obstero python 01_classification.py --max-items 1`.
 
 ## What not to do
 

@@ -16,10 +16,10 @@ Always start in **dry-run** (the default — no flag needed). Only add `--live`
 after the user has reviewed the dry-run preview and explicitly confirms.
 
 ```
-python 01_classification.py                          # dry-run, only '00 - Unclassified' folder
-python 01_classification.py --all-items               # dry-run, entire library
-python 01_classification.py --max-items 5             # dry-run, cap to 5 items (good for a quick check)
-python 01_classification.py --live                     # actually write to Zotero
+conda run --no-capture-output -n obstero python 01_classification.py                          # dry-run, only '00 - Unclassified' folder
+conda run --no-capture-output -n obstero python 01_classification.py --all-items               # dry-run, entire library
+conda run --no-capture-output -n obstero python 01_classification.py --max-items 5             # dry-run, cap to 5 items (good for a quick check)
+conda run --no-capture-output -n obstero python 01_classification.py --live                     # actually write to Zotero
 ```
 
 Other flags: `--rate-limit-delay N` (seconds between LLM calls, default 2).
@@ -33,4 +33,4 @@ Other flags: `--rate-limit-delay N` (seconds between LLM calls, default 2).
    this writes to their real Zotero library, so only do it after explicit
    confirmation.
 4. If `config/collections.json` is missing, tell the user to run
-   `python tools/id_extractor.py --write` first (see the `obstero-setup` skill).
+   `conda run --no-capture-output -n obstero python tools/id_extractor.py --write` first (see the `obstero-setup` skill).

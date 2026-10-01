@@ -16,10 +16,10 @@ Default is **dry-run** across all three stages. Only add `--live` after the
 user reviews the combined preview and confirms.
 
 ```
-python run_pipeline.py                                   # dry-run, all 3 stages
-python run_pipeline.py --max-items 5 --max-papers 5        # dry-run, small sample of each stage
-python run_pipeline.py --live                              # actually run everything live
-python run_pipeline.py --live --skip-sync                  # classify + summarize live, skip vault sync
+conda run --no-capture-output -n obstero python run_pipeline.py                                   # dry-run, all 3 stages
+conda run --no-capture-output -n obstero python run_pipeline.py --max-items 5 --max-papers 5        # dry-run, small sample of each stage
+conda run --no-capture-output -n obstero python run_pipeline.py --live                              # actually run everything live
+conda run --no-capture-output -n obstero python run_pipeline.py --live --skip-sync                  # classify + summarize live, skip vault sync
 ```
 
 Skip flags: `--skip-classify`, `--skip-summarize`, `--skip-sync`.

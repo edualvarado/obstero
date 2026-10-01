@@ -17,9 +17,9 @@ preview it) but nothing is saved to Zotero. Only add `--live` after the user
 reviews the preview and confirms.
 
 ```
-python 02_summary.py                          # dry-run, up to 50 papers, preview only
-python 02_summary.py --max-papers 3            # dry-run, cap to 3 papers for a quick check
-python 02_summary.py --live                     # actually save notes + _SUMMARIZED tag to Zotero
+conda run --no-capture-output -n obstero python 02_summary.py                          # dry-run, up to 50 papers, preview only
+conda run --no-capture-output -n obstero python 02_summary.py --max-papers 3            # dry-run, cap to 3 papers for a quick check
+conda run --no-capture-output -n obstero python 02_summary.py --live                     # actually save notes + _SUMMARIZED tag to Zotero
 ```
 
 Other flags: `--rate-limit-delay N` (seconds between LLM calls, default 5 —

@@ -59,9 +59,13 @@ research:
 ```bash
 git clone <this-repo>
 cd obstero
+conda create -y -n obstero python=3.12
+conda activate obstero
 pip install -r requirements.txt
 cp .env.example .env   # then fill in your credentials/paths
 ```
+
+The Claude Code skills in `.claude/skills/` run every command via `conda run -n obstero python ...`, so keep the env named `obstero`.
 
 `.env` variables:
 

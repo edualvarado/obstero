@@ -17,10 +17,10 @@ Default is **dry-run** — lists what would be written without touching the
 vault. Only add `--live` after the user confirms.
 
 ```
-python 03_sync_to_obsidian.py                          # dry-run preview
-python 03_sync_to_obsidian.py --chunk-size 20           # dry-run, cap to 20 files
-python 03_sync_to_obsidian.py --live                     # actually write Markdown files
-python 03_sync_to_obsidian.py --live --keep-ai-links     # write files, trust Claude's own [[links]] instead of re-injecting from config/primitives.json
+conda run --no-capture-output -n obstero python 03_sync_to_obsidian.py                          # dry-run preview
+conda run --no-capture-output -n obstero python 03_sync_to_obsidian.py --chunk-size 20           # dry-run, cap to 20 files
+conda run --no-capture-output -n obstero python 03_sync_to_obsidian.py --live                     # actually write Markdown files
+conda run --no-capture-output -n obstero python 03_sync_to_obsidian.py --live --keep-ai-links     # write files, trust Claude's own [[links]] instead of re-injecting from config/primitives.json
 ```
 
 ## What to do
@@ -32,5 +32,5 @@ python 03_sync_to_obsidian.py --live --keep-ai-links     # write files, trust Cl
    notes; it always skips files that already exist at the destination path).
 3. If `config/primitives.json` is missing, sync still works — it falls back
    to the small generic example and warns about it. Suggest running
-   `python tools/discover_primitives.py --write` to build a real taxonomy
+   `conda run --no-capture-output -n obstero python tools/discover_primitives.py --write` to build a real taxonomy
    from the vault's existing links.
