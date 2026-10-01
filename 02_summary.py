@@ -34,12 +34,13 @@ def run_summary_pipeline(dry_run=True, max_papers=50, rate_limit_delay=5):
 
     # 3. Process the queue
     processed_count = 0
+    attempted_count = 0  # Claude calls made — max_papers caps this, so failures still count toward the limit
 
     for item, current_tags in items_to_process:
         title = item['data'].get('title', 'Untitled')
         item_key = item['key']
 
-        print(f"\n[{processed_count + 1}/{max_papers}] Target: {title[:70]}...")
+        print(f"\n[{attempted_count + 1}/{max_papers}] Target: {title[:70]}...")
 
         # Check for attachments
         if item['meta'].get('numChildren', 0) == 0:
@@ -61,13 +62,12 @@ def run_summary_pipeline(dry_run=True, max_papers=50, rate_limit_delay=5):
 
         # Clean tags to feed to Claude (hide internal trackers)
         ai_tags = [t for t in current_tags if t not in ['_CLASSIFIED', '_SUMMARIZED']]
+        attempted_count += 1
         markdown_note = summarize_paper(title, pdf_text, ai_tags)
 
         if not markdown_note:
             print("   ❌ Failed to generate summary.")
-            continue
-
-        if dry_run:
+        elif dry_run:
             print("   [PREVIEW] Generated summary (not saved):")
             print(f"   {markdown_note[:300]}...")
             processed_count += 1
@@ -91,12 +91,12 @@ def run_summary_pipeline(dry_run=True, max_papers=50, rate_limit_delay=5):
                 print("   ❌ Failed to attach note.")
 
         # Stop if we hit our configured limit
-        if processed_count >= max_papers:
+        if attempted_count >= max_papers:
             print(f"\n🛑 Reached configured limit of {max_papers} papers.")
             break
 
         # Respect Rate Limits between papers
-        if processed_count < max_papers:
+        if attempted_count < max_papers:
             print(f"   ⏳ Cooling down for {rate_limit_delay} seconds...")
             time.sleep(rate_limit_delay)
 
