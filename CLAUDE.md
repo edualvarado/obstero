@@ -26,14 +26,14 @@ the Obsidian vault as `.md` files with injected wiki-links.
 ## Tech Stack
 - Python; each stage is an argparse CLI (`python 01_classification.py --help`, etc.), or run all three via `run_pipeline.py`
 - Zotero Web API (`pyzotero`) + local PDF access via ZotFile/OneDrive linked files
-- Anthropic Claude API — Haiku for classification, Sonnet for summarization
+- Anthropic Claude API — Sonnet for both classification and summarization
 
 ## Conventions
 - Every stage is dry-run by default — pass `--live` to actually write to Zotero/the vault
 - `_CLASSIFIED` and `_SUMMARIZED` are idempotency tags — do not strip or rename them
 - If Zotero library structure changes, regenerate `config/collections.json` with `python tools/id_extractor.py --write`
 - Wiki-link injection: strips all AI-generated links first, then re-injects from `config/primitives.json` (`src.config.PRIMITIVES_TO_LINK`)
-- Models: `claude-haiku-4-5-20251001` (classify) · `claude-sonnet-4-6` (summarize)
+- Models: `claude-sonnet-5-5` (classify + summarize)
 
 ## Current Focus
 Maintenance. Run order: Stage 1 → Stage 2 → Stage 3 (or `run_pipeline.py` for all three).

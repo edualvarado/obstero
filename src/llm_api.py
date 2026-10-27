@@ -7,7 +7,7 @@ from src.config import CLAUDE_API_KEY, VALID_FOLDERS
 client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
 
 def classify_paper(title, abstract, existing_tags=None):
-    tags_context = f"Prefer these existing tags if applicable: {existing_tags}" if existing_tags else ""
+    tags_context = f"Reuse a tag from this existing list only when it accurately describes this specific paper; otherwise create a new, specific tag: {existing_tags}" if existing_tags else ""
 
     prompt = f"""
     You are an expert academic research assistant. Classify the following academic paper based on its title and abstract.
@@ -27,24 +27,39 @@ def classify_paper(title, abstract, existing_tags=None):
     }}
     """
     
+    # Structured outputs replace the old "{" prefill (prefill and temperature are rejected on Haiku 5.5)
+    schema = {
+        "type": "object",
+        "properties": {
+            "target_folder": {"type": "string", "enum": VALID_FOLDERS},
+            "tags": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["target_folder", "tags"],
+        "additionalProperties": False,
+    }
+
+    raw_output = ""
     try:
         response = client.messages.create(
-            model="claude-haiku-4-5-20251001", 
-            max_tokens=300,
-            temperature=0.0, 
+            model="claude-sonnet-5-5",
+            max_tokens=2048,  # thinking counts toward max_tokens
+            output_config={"effort": "low", "format": {"type": "json_schema", "schema": schema}},
             system="You are a data-processing AI. You only output raw, valid JSON without any markdown formatting.",
             messages=[
-                {"role": "user", "content": prompt},
-                {"role": "assistant", "content": "{"}
+                {"role": "user", "content": prompt}
             ]
         )
-        
-        raw_output = response.content[0].text
-        clean_json = "{" + raw_output.strip()
-        return json.loads(clean_json)
-        
+
+        if response.stop_reason == "refusal":
+            print(f"Claude declined to classify this paper ({response.stop_details.category}).")
+            return None
+
+        # Response may start with thinking blocks — read the text block by type
+        raw_output = next((b.text for b in response.content if b.type == "text"), "")
+        return json.loads(raw_output)
+
     except json.JSONDecodeError:
-        print(f"Error parsing Claude JSON response. Raw output: {clean_json}")
+        print(f"Error parsing Claude JSON response. Raw output: {raw_output}")
         return None
     except Exception as e:
         print(f"Anthropic API Error: {e}")
@@ -104,15 +119,21 @@ def summarize_paper(title, pdf_text, tags=None):
     
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-6", 
-            max_tokens=3000,  # Increased from 1500 to 3000 to prevent cut-offs
-            temperature=0.2,  
+            model="claude-sonnet-5-5",
+            max_tokens=16000,  # thinking counts toward max_tokens on Sonnet 5.5; 3000 would truncate
             messages=[
                 {"role": "user", "content": prompt}
             ]
         )
-        
-        output = response.content[0].text.strip()
+
+        if response.stop_reason == "refusal":
+            print(f"Claude declined to summarize this paper ({response.stop_details.category}).")
+            return None
+        if response.stop_reason == "max_tokens":
+            print("Warning: summary hit max_tokens and may be truncated.")
+
+        # Response may start with thinking blocks — read the text block by type
+        output = next((b.text for b in response.content if b.type == "text"), "").strip()
         
         # Failsafe: Strip markdown blocks if Claude includes them
         if output.startswith("```markdown"):
@@ -122,7 +143,10 @@ def summarize_paper(title, pdf_text, tags=None):
             
         if output.endswith("```"):
             output = output[:-3].strip()
-            
+
+        # Python-Markdown only nests lists indented by 4 spaces; Sonnet 5.5 indents sub-bullets by 2
+        output = re.sub(r'^ {2}(?=[*-] )', '    ', output, flags=re.M)
+
         return output
         
     except Exception as e:
